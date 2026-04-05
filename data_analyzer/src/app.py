@@ -213,7 +213,6 @@ else:
             styled_high = high_risk_customers.style.map(
                 highlight_probability, subset=['churn_probability']
             )
-            st.dataframe(styled_high, use_container_width=True)
         else:
             st.warning("No high risk customers found")
             
