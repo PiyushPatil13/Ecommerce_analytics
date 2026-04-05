@@ -814,11 +814,14 @@ def data_prep(df):
 
 @st.cache_data
 def call_churn(df):
-    import os, pickle
-    import pandas as pd
-    import numpy as np
+    import os, pickle, pandas as pd, numpy as np
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    BASE_DIR  = os.path.dirname(os.path.abspath(__file__))
+    pkl_path  = os.path.join(BASE_DIR, "churn_predictor.pkl")
+
+    # ── debug ──
+    st.write("Looking for pkl at:", pkl_path)
+    st.write("Files in BASE_DIR:", os.listdir(BASE_DIR))
 
     with open(os.path.join(BASE_DIR, "churn_predictor.pkl"), "rb") as f:
         model = pickle.load(f)
