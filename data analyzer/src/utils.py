@@ -25,7 +25,7 @@ def string_to_numeric_data(datas):
     # handeling string to numeric
     column = datas.columns.tolist()
     for obj in column:
-        datas[obj] = pd.to_numeric(datas[obj],errors = 'ignore')
+        pd.to_numeric(datas[obj], errors='coerce')
 
     return datas
 
