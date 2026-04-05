@@ -1,0 +1,9 @@
+    iterations=1000,
+        learning_rate=0.05,
+        depth=6,
+        l2_leaf_reg=3,
+        loss_function='Logloss',
+        auto_class_weights='Balanced',
+        eval_metric='AUC',
+        random_state=42,
+        verbose=0
