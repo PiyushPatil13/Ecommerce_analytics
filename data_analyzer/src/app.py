@@ -209,9 +209,14 @@ else:
         def convert_df(df):
             return df.to_csv(index=False).encode('utf-8')
 
-        styled_high = high_risk_customers.style.applymap(
-            highlight_probability, subset=['churn_probability']
-        )
+        if not high_risk_customers.empty:
+            styled_high = high_risk_customers.style.applymap(
+                highlight_probability, subset=['churn_probability']
+            )
+            st.dataframe(styled_high, use_container_width=True)
+        else:
+            st.warning("No high risk customers found")
+            
         st.subheader("🔴 High Risk Customers")
         st.dataframe(styled_high, use_container_width=True)
         st.download_button(
@@ -221,10 +226,14 @@ else:
             mime='text/csv'
         )
 
-        styled_moderate = moderate_risk_customers.style.applymap(
-            highlight_probability, subset=['churn_probability']
-        )
-        st.subheader("🟡 Moderate Risk Customers")
+        if not moderate_risk_customers.empty:
+            styled_moderate = moderate_risk_customers.style.applymap(
+                highlight_probability, subset=['churn_probability']
+            )
+            st.dataframe(styled_moderate, use_container_width=True)
+        else:
+            st.warning("No moderate risk customers found")
+        st.subheader("🟡 Moderate Risk Customers")  hig
         st.dataframe(styled_moderate, use_container_width=True)
         st.download_button(
             label="Download Moderate Risk Customers CSV",
