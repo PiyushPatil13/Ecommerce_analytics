@@ -31,6 +31,23 @@ def getbase64(bin_file):
         data = f.read()
     return base64.b64encode(data).decode()
 
+def set_background(image_file):
+    bin_str = getbase64(image_file)
+    page_bg_img = f'''
+    <style>
+    .stApp {{
+        background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+                          url("data:image/png;base64,{bin_str}");
+        background-size: cover;
+        background-attachment: fixed;
+    }}
+    </style>
+    '''
+    st.markdown(page_bg_img, unsafe_allow_html=True)
+
+set_background("https://blog.herzing.ca/hubfs/data%20analytics.jpg")
+
+
 
 st.markdown("""
     <style>
