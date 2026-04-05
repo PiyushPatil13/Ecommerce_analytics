@@ -817,39 +817,40 @@ def call_churn(df):
     import os
     import pickle
     import pandas as pd
+    from machine_learning.advanced_churn_predictor import build_features, create_churn_label
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    # ---- Load model ----
+    # ── Load pre-trained model ──
     model_path = os.path.join(BASE_DIR, "churn_predictor.pkl")
     with open(model_path, "rb") as f:
         model = pickle.load(f)
 
-    # ---- Ensure datetime ----
+    # ── Load pre-saved features list ──
+    features_path = os.path.join(BASE_DIR, "machine_learning", "churn_features.pkl")
+    with open(features_path, "rb") as f:
+        features = pickle.load(f)
+
     df['order-date'] = pd.to_datetime(df['order-date'])
 
-    # ---- Recreate SAME pipeline as training ----
+    # ── Build features only — NO retraining ──
     customer_stats = create_churn_label(df)
-    customer_stats, features = build_features(customer_stats, df)
+    customer_stats, _ = build_features(customer_stats, df)
 
-    # ---- Ensure feature consistency ----
     for col in features:
         if col not in customer_stats.columns:
             customer_stats[col] = 0
 
     X = customer_stats[features].fillna(0)
 
-    # ---- Prediction ----
-    churn_probabilities = model.predict_proba(X)[:, 1]
+    # ── Predict using saved model ──
+    customer_stats['probabilities'] = model.predict_proba(X)[:, 1]
 
-    # ---- Attach results ----
-    customer_stats['churn_probability'] = churn_probabilities
-
-    # ---- Risk segmentation ----
-    customer_stats['risk_segment'] = pd.cut(
-        customer_stats['churn_probability'],
-        bins=[0, 0.3, 0.7, 1.0],
-        labels=['🟢 Stable', '🟡 At Risk', '🔴 Critical']
+    # ── Risk segmentation ──
+    customer_stats['risk segment'] = pd.cut(
+        customer_stats['probabilities'],
+        bins   = [0, 0.3, 0.7, 1.0],
+        labels = ['🟢 Stable', '🟡 At Risk', '🔴 Critical']
     )
 
     return customer_stats
