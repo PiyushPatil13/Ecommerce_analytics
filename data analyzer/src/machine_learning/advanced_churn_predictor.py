@@ -19,35 +19,41 @@ from lightgbm import LGBMClassifier
 def create_churn_label(df):
 
     customer_status = df.groupby('customer-email').agg(
-        last_purchase = ('order-date','max'),
-        total_orders = ('order-id','count'),
-        total_revenue = ('total-value','sum'),
-        average_order_value = ('total-value','mean'),
-        return_count = ('status',
-                        lambda x:(x=='Returned').sum()),
-        cancel_count = ('status',
-                        lambda x:(x=='Cancelled').sum())
-
+        last_purchase        = ('order-date', 'max'),
+        total_orders         = ('order-id', 'count'),
+        total_revenue        = ('total-value', 'sum'),
+        average_order_value  = ('total-value', 'mean'),
+        return_count         = ('status', lambda x: (x == 'Returned').sum()),
+        cancel_count         = ('status', lambda x: (x == 'Cancelled').sum())
     ).reset_index()
 
     max_date = df['order-date'].max()
 
-    #defining customer
     customer_status['recency'] = (
         max_date - customer_status['last_purchase']
     ).dt.days
 
-    # churn definition
-    recency_threshold = customer_status['recency'].quantile(0.75)
-    
+    # ── calculate return_rate HERE before using it ──
+    customer_status['return_rate'] = (
+        customer_status['return_count'] /
+        customer_status['total_orders'].clip(lower=1)
+    )
+
+    # ── purchase-frequency placeholder (built properly in build_features) ──
+    customer_status['purchase-frequency'] = (
+        customer_status['total_orders'] /
+        customer_status['recency'].clip(lower=1)
+    )
+
     customer_status['churned_prob'] = (
         0.4 * (customer_status['recency'] / customer_status['recency'].max()) +
         0.3 * customer_status['return_rate'] +
-        0.3 * (1 - customer_status['purchase-frequency'].clip(0,1))
-    )
+        0.3 * (1 - customer_status['purchase-frequency'].clip(0, 1))
+    ).clip(0, 1)  # ← clip to valid probability range
 
-# Then generate binary churn based on this probability
-    customer_status['churned'] = np.random.binomial(1, customer_status['churned_prob'])
+    customer_status['churned'] = np.random.binomial(
+        1, customer_status['churned_prob']
+    )
 
     return customer_status
 
