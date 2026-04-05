@@ -814,37 +814,40 @@ def data_prep(df):
 
 @st.cache_data
 def call_churn(df):
-    import os
-    import pickle
+    import os, pickle
     import pandas as pd
-    from machine_learning.advanced_churn_predictor import build_features, create_churn_label
+    import numpy as np
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    # ── Both pkl files are in src/ (same folder as visualizer.py) ──
-    model_path    = os.path.join(BASE_DIR, "churn_predictor.pkl")
-    features_path = os.path.join(BASE_DIR, "churn_features.pkl")
-
-    with open(model_path, "rb") as f:
+    with open(os.path.join(BASE_DIR, "churn_predictor.pkl"), "rb") as f:
         model = pickle.load(f)
 
-    with open(features_path, "rb") as f:
-        features = pickle.load(f)
+    features = [
+        'Recency', 'Frequency', 'Total_Value',
+        'Avg_Value', 'Return_Rate', 'Cancel_Rate'
+    ]
 
     df['order-date'] = pd.to_datetime(df['order-date'])
+    ref_date = df['order-date'].max()
 
-    customer_stats = create_churn_label(df)
-    customer_stats, _ = build_features(customer_stats, df)
+    # ── Aggregate ──
+    customer_stats = df.groupby('customer-email').agg(
+        Recency      = ('order-date',  lambda x: (ref_date - x.max()).days),
+        Frequency    = ('order-id',    'nunique'),
+        Total_Value  = ('total-value', 'sum'),
+        Avg_Value    = ('total-value', 'mean'),
+        Return_Count = ('status',      lambda x: (x == 'Returned').sum()),
+        Cancel_Count = ('status',      lambda x: (x == 'Cancelled').sum()),
+    ).reset_index()
 
-    for col in features:
-        if col not in customer_stats.columns:
-            customer_stats[col] = 0
+    customer_stats['Return_Rate'] = customer_stats['Return_Count'] / customer_stats['Frequency'].clip(lower=1)
+    customer_stats['Cancel_Rate'] = customer_stats['Cancel_Count'] / customer_stats['Frequency'].clip(lower=1)
 
     X = customer_stats[features].fillna(0)
 
     customer_stats['probabilities'] = model.predict_proba(X)[:, 1]
-
-    customer_stats['risk segment'] = pd.cut(
+    customer_stats['risk segment']  = pd.cut(
         customer_stats['probabilities'],
         bins   = [0, 0.3, 0.7, 1.0],
         labels = ['🟢 Stable', '🟡 At Risk', '🔴 Critical']
