@@ -180,7 +180,7 @@ else:
             values='count',
             hole=0.55,
             title='Customer Risk Distribution',
-            color='risk segment',
+            color='risk_segment',
             color_discrete_map={
                 '🟢 Stable'  : "#00FF6A",
                 '🟡 At Risk' : '#F4D03F',
