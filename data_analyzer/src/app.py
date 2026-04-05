@@ -45,7 +45,7 @@ def set_background(image_file):
     '''
     st.markdown(page_bg_img, unsafe_allow_html=True)
 
-set_background("https://blog.herzing.ca/hubfs/data%20analytics.jpg")
+set_background(r"https://blog.herzing.ca/hubfs/data%20analytics.jpg")
 
 
 
