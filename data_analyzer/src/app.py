@@ -218,13 +218,21 @@ else:
             st.warning("No high risk customers found")
             
         st.subheader("🔴 High Risk Customers")
-        st.dataframe(styled_high, use_container_width=True)
-        st.download_button(
-            label="Download High Risk Customers CSV",
-            data=convert_df(high_risk_customers),
-            file_name='high_risk_customers.csv',
-            mime='text/csv'
-        )
+
+        if not high_risk_customers.empty:
+            styled_high = high_risk_customers.style.applymap(
+                highlight_probability, subset=['churn_probability']
+            )
+            st.dataframe(styled_high, use_container_width=True)
+        
+            st.download_button(
+                label="Download High Risk Customers CSV",
+                data=convert_df(high_risk_customers),
+                file_name='high_risk_customers.csv',
+                mime='text/csv'
+            )
+        else:
+            st.warning("No high risk customers found")
 
         if not moderate_risk_customers.empty:
             styled_moderate = moderate_risk_customers.style.applymap(
@@ -233,14 +241,22 @@ else:
             st.dataframe(styled_moderate, use_container_width=True)
         else:
             st.warning("No moderate risk customers found")
-        st.subheader("🟡 Moderate Risk Customers")  
-        st.dataframe(styled_moderate, use_container_width=True)
-        st.download_button(
-            label="Download Moderate Risk Customers CSV",
-            data=convert_df(moderate_risk_customers),
-            file_name='moderate_risk_customers.csv',
-            mime='text/csv'
-        )
+        st.subheader("🟡 Moderate Risk Customers")
+
+        if not moderate_risk_customers.empty:
+            styled_moderate = moderate_risk_customers.style.applymap(
+                highlight_probability, subset=['churn_probability']
+            )
+            st.dataframe(styled_moderate, use_container_width=True)
+        
+            st.download_button(
+                label="Download Moderate Risk Customers CSV",
+                data=convert_df(moderate_risk_customers),
+                file_name='moderate_risk_customers.csv',
+                mime='text/csv'
+            )
+        else:
+            st.warning("No moderate risk customers found")
 
         executive_kpi_section(churned_data)
 
