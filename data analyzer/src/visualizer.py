@@ -814,44 +814,45 @@ def data_prep(df):
 
 @st.cache_data
 def call_churn(df):
+    import os
+    import pickle
+    import pandas as pd
+
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    # Load model
+    # ---- Load model ----
     model_path = os.path.join(BASE_DIR, "churn_predictor.pkl")
     with open(model_path, "rb") as f:
         model = pickle.load(f)
-    
-    # Load features
-    features_path = os.path.join(BASE_DIR, "churn_features.pkl")
-    with open(features_path, "rb") as f:
-        features = pickle.load(f)
+
+    # ---- Ensure datetime ----
     df['order-date'] = pd.to_datetime(df['order-date'])
 
-    test_data = data_prep(df)
-    features = [
-        'recency',
-        'total_orders',
-        'total_revenue',
-        'average_order_value',     
-        'return_rate',
-        'cancelled_rate',          
-        'customer-age-days',       
-        'purchase-frequency'       
-    ]   
-    x = test_data[features].fillna(0)
-    churn_probabilities = model.predict_proba(x)[:,1]
+    # ---- Recreate SAME pipeline as training ----
+    customer_stats = create_churn_label(df)
+    customer_stats, features = build_features(customer_stats, df)
 
-    # adding to the dataframe
-    test_data['probabilities'] = churn_probabilities
+    # ---- Ensure feature consistency ----
+    for col in features:
+        if col not in customer_stats.columns:
+            customer_stats[col] = 0
 
-    #pd.cut will divide the data into particular segments
+    X = customer_stats[features].fillna(0)
 
-    test_data['risk segment'] = pd.cut(
-        test_data['probabilities'],
-        bins = [0,0.3,0.7,1.0],
+    # ---- Prediction ----
+    churn_probabilities = model.predict_proba(X)[:, 1]
+
+    # ---- Attach results ----
+    customer_stats['churn_probability'] = churn_probabilities
+
+    # ---- Risk segmentation ----
+    customer_stats['risk_segment'] = pd.cut(
+        customer_stats['churn_probability'],
+        bins=[0, 0.3, 0.7, 1.0],
         labels=['🟢 Stable', '🟡 At Risk', '🔴 Critical']
     )
-    return test_data
+
+    return customer_stats
 
 def executive_kpi_section(df):
     col1,col2,col3,col4 = st.columns(4)
