@@ -171,7 +171,7 @@ else:
         st.caption("Predictive analysis page")
 
         churned_data = call_churn(df)
-        counts = churned_data['risk segment'].value_counts().reset_index()
+        counts = churned_data['risk_segment'].value_counts().reset_index()
         counts.columns = ['risk segment', 'count']
 
         fig = px.pie(
