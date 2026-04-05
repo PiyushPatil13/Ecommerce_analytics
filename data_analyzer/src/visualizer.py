@@ -814,23 +814,34 @@ def data_prep(df):
 
 @st.cache_data
 def call_churn(df):
-    import os, pickle, glob
+    import os
+    import pickle
     import pandas as pd
 
-    # ── Use glob to find pkl regardless of path/space issues ──
-    base = "/mount/src/ecommerce_analytics"
+    # ✅ Always get current file directory
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+    # ✅ Correct path (NO GUESSING)
+    model_path = os.path.join(BASE_DIR, "machine_learning", "churn_predictor.pkl")
+    features_path = os.path.join(BASE_DIR, "machine_learning", "churn_features.pkl")
+
+    # 🔥 Debug (REMOVE later)
+    print("MODEL PATH:", model_path)
+    print("FEATURE PATH:", features_path)
+    print("MODEL EXISTS:", os.path.exists(model_path))
+    print("FEATURE EXISTS:", os.path.exists(features_path))
+
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"❌ Model not found at: {model_path}")
+    if not os.path.exists(features_path):
+        raise FileNotFoundError(f"❌ Features not found at: {features_path}")
+
+    with open(model_path, "rb") as f:
+        model = pickle.load(f)
+
+    with open(features_path, "rb") as f:
+        features = pickle.load(f)
     
-    model_matches    = glob.glob(f"{base}/**/churn_predictor.pkl", recursive=True)
-    features_matches = glob.glob(f"{base}/**/churn_features.pkl",  recursive=True)
-
-    if not model_matches:
-        raise FileNotFoundError("churn_predictor.pkl not found on server")
-    if not features_matches:
-        raise FileNotFoundError("churn_features.pkl not found on server")
-
-    with open(model_matches[0],    "rb") as f: model    = pickle.load(f)
-    with open(features_matches[0], "rb") as f: features = pickle.load(f)
-
     df = df.copy()
     df['order-date'] = pd.to_datetime(df['order-date'], errors='coerce')
     df = df.dropna(subset=['order-date'])
