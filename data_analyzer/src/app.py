@@ -222,7 +222,7 @@ else:
             styled_moderate = moderate_risk_customers.style.map(
                 highlight_probability, subset=['churn_probability']
             )
-            st.dataframe(styled_high, use_container_width=True)
+        
         
             st.download_button(
                 label="Download High Risk Customers CSV",
