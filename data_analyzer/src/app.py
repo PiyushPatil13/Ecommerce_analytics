@@ -176,7 +176,7 @@ else:
 
         fig = px.pie(
             counts,
-            names='risk segment',
+            names='risk_segment',
             values='count',
             hole=0.55,
             title='Customer Risk Distribution',
@@ -210,7 +210,7 @@ else:
             return df.to_csv(index=False).encode('utf-8')
 
         styled_high = high_risk_customers.style.applymap(
-            highlight_probability, subset=['probabilities']
+            highlight_probability, subset=['churn_probability']
         )
         st.subheader("🔴 High Risk Customers")
         st.dataframe(styled_high, use_container_width=True)
@@ -222,7 +222,7 @@ else:
         )
 
         styled_moderate = moderate_risk_customers.style.applymap(
-            highlight_probability, subset=['probabilities']
+            highlight_probability, subset=['churn_probability']
         )
         st.subheader("🟡 Moderate Risk Customers")
         st.dataframe(styled_moderate, use_container_width=True)
