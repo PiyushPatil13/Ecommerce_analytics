@@ -172,7 +172,7 @@ else:
 
         churned_data = call_churn(df)
         counts = churned_data['risk_segment'].value_counts().reset_index()
-        counts.columns = ['risk segment', 'count']
+        counts.columns = ['risk_segment', 'count']
 
         fig = px.pie(
             counts,
@@ -203,8 +203,8 @@ else:
             else:
                 return 'background-color: #66cc66; color: white;'
 
-        high_risk_customers     = churned_data[churned_data['risk segment'] == '🔴 Critical']
-        moderate_risk_customers = churned_data[churned_data['risk segment'] == '🟡 At Risk']
+        high_risk_customers     = churned_data[churned_data['risk_segment'] == '🔴 Critical']
+        moderate_risk_customers = churned_data[churned_data['risk_segment'] == '🟡 At Risk']
 
         def convert_df(df):
             return df.to_csv(index=False).encode('utf-8')
