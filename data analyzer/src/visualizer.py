@@ -11,7 +11,7 @@ import os
 import numpy as np
 import plotly.graph_objects as go
 from prophet import Prophet
-
+from machine_learning.advanced_churn_predictor import create_churn_label, build_features
 
 st.markdown("""
 <style>
