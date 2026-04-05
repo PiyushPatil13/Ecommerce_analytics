@@ -1,0 +1,12 @@
+streamlit
+pandas
+numpy
+plotly
+xgboost
+scikit-learn
+prophet
+statsmodels
+matplotlib
+faker
+yfinance
+pickle5
