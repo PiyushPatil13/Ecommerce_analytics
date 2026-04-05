@@ -814,54 +814,42 @@ def data_prep(df):
 
 @st.cache_data
 def call_churn(df):
-    import os
-    import pickle
+    import os, pickle, glob
     import pandas as pd
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # ── Use glob to find pkl regardless of path/space issues ──
+    base = "/mount/src/ecommerce_analytics"
+    
+    model_matches    = glob.glob(f"{base}/**/churn_predictor.pkl", recursive=True)
+    features_matches = glob.glob(f"{base}/**/churn_features.pkl",  recursive=True)
 
-    model_path = os.path.join(BASE_DIR, "machine_learning", "churn_predictor.pkl")
-    features_path = os.path.join(BASE_DIR, "machine_learning", "churn_features.pkl")
+    if not model_matches:
+        raise FileNotFoundError("churn_predictor.pkl not found on server")
+    if not features_matches:
+        raise FileNotFoundError("churn_features.pkl not found on server")
 
-    # 🔥 SAFETY CHECK (THIS WAS MISSING)
-    if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model not found at: {model_path}")
+    with open(model_matches[0],    "rb") as f: model    = pickle.load(f)
+    with open(features_matches[0], "rb") as f: features = pickle.load(f)
 
-    if not os.path.exists(features_path):
-        raise FileNotFoundError(f"Features file not found at: {features_path}")
-
-    # ✅ Load model + features
-    with open(model_path, "rb") as f:
-        model = pickle.load(f)
-
-    with open(features_path, "rb") as f:
-        features = pickle.load(f)
-
-    # ✅ Preprocess
     df = df.copy()
     df['order-date'] = pd.to_datetime(df['order-date'], errors='coerce')
     df = df.dropna(subset=['order-date'])
-
     ref_date = df['order-date'].max()
 
-    # ✅ Aggregation
     customer_stats = df.groupby('customer-email').agg(
-        last_purchase=('order-date', 'max'),
-        total_orders=('order-id', 'count'),
-        total_revenue=('total-value', 'sum'),
-        average_order_value=('total-value', 'mean'),
-        return_count=('status', lambda x: (x == 'Returned').sum()),
-        cancel_count=('status', lambda x: (x == 'Cancelled').sum())
+        last_purchase       = ('order-date',  'max'),
+        total_orders        = ('order-id',    'count'),
+        total_revenue       = ('total-value', 'sum'),
+        average_order_value = ('total-value', 'mean'),
+        return_count        = ('status', lambda x: (x == 'Returned').sum()),
+        cancel_count        = ('status', lambda x: (x == 'Cancelled').sum())
     ).reset_index()
 
-    # ✅ Feature engineering
     customer_stats['recency'] = (ref_date - customer_stats['last_purchase']).dt.days
-
     customer_stats['return_rate'] = (
         customer_stats['return_count'] /
         customer_stats['total_orders'].clip(lower=1)
     )
-
     customer_stats['cancelled_rate'] = (
         customer_stats['cancel_count'] /
         customer_stats['total_orders'].clip(lower=1)
@@ -869,36 +857,28 @@ def call_churn(df):
 
     customer_first = df.groupby('customer-email')['order-date'].min().reset_index()
     customer_first.columns = ['customer-email', 'first_purchase']
-
     customer_stats = customer_stats.merge(customer_first, on='customer-email', how='left')
 
-    customer_stats['customer_age_days'] = (
-        ref_date - customer_stats['first_purchase']
-    ).dt.days
-
+    customer_stats['customer_age_days'] = (ref_date - customer_stats['first_purchase']).dt.days
     customer_stats['purchase_frequency'] = (
         customer_stats['total_orders'] /
         customer_stats['customer_age_days'].clip(lower=1)
     )
 
-    # ✅ Ensure feature consistency
     for col in features:
         if col not in customer_stats.columns:
             customer_stats[col] = 0
 
     X = customer_stats[features].fillna(0).astype(float)
 
-    # ✅ Predictions
     customer_stats['churn_probability'] = model.predict_proba(X)[:, 1]
-
-    customer_stats['risk_segment'] = pd.cut(
+    customer_stats['risk_segment']      = pd.cut(
         customer_stats['churn_probability'],
-        bins=[0, 0.3, 0.7, 1.0],
-        labels=['🟢 Stable', '🟡 At Risk', '🔴 Critical']
+        bins   = [0, 0.3, 0.7, 1.0],
+        labels = ['🟢 Stable', '🟡 At Risk', '🔴 Critical']
     )
 
     return customer_stats
-
 def executive_kpi_section(df):
     col1,col2,col3,col4 = st.columns(4)
 
