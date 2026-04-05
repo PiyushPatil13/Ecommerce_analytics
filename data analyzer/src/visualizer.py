@@ -821,19 +821,18 @@ def call_churn(df):
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-    # ── Load pre-trained model ──
-    model_path = os.path.join(BASE_DIR, "churn_predictor.pkl")
+    # ── Both pkl files are in src/ (same folder as visualizer.py) ──
+    model_path    = os.path.join(BASE_DIR, "churn_predictor.pkl")
+    features_path = os.path.join(BASE_DIR, "churn_features.pkl")
+
     with open(model_path, "rb") as f:
         model = pickle.load(f)
 
-    # ── Load pre-saved features list ──
-    features_path = os.path.join(BASE_DIR, "machine_learning", "churn_features.pkl")
     with open(features_path, "rb") as f:
         features = pickle.load(f)
 
     df['order-date'] = pd.to_datetime(df['order-date'])
 
-    # ── Build features only — NO retraining ──
     customer_stats = create_churn_label(df)
     customer_stats, _ = build_features(customer_stats, df)
 
@@ -843,10 +842,8 @@ def call_churn(df):
 
     X = customer_stats[features].fillna(0)
 
-    # ── Predict using saved model ──
     customer_stats['probabilities'] = model.predict_proba(X)[:, 1]
 
-    # ── Risk segmentation ──
     customer_stats['risk segment'] = pd.cut(
         customer_stats['probabilities'],
         bins   = [0, 0.3, 0.7, 1.0],
