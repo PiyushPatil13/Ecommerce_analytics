@@ -210,7 +210,7 @@ else:
             return df.to_csv(index=False).encode('utf-8')
 
         if not high_risk_customers.empty:
-            styled_high = high_risk_customers.style.applymap(
+            styled_high = high_risk_customers.style.map(
                 highlight_probability, subset=['churn_probability']
             )
             st.dataframe(styled_high, use_container_width=True)
@@ -220,7 +220,7 @@ else:
         st.subheader("🔴 High Risk Customers")
 
         if not high_risk_customers.empty:
-            styled_high = high_risk_customers.style.applymap(
+            styled_moderate = moderate_risk_customers.style.map(
                 highlight_probability, subset=['churn_probability']
             )
             st.dataframe(styled_high, use_container_width=True)
