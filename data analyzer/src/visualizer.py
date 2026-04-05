@@ -815,11 +815,16 @@ def data_prep(df):
 @st.cache_data
 def call_churn(df):
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    model_path = os.path.join(BASE_DIR, "churn_predictor.pkl")
 
+    # Load model
+    model_path = os.path.join(BASE_DIR, "churn_predictor.pkl")
     with open(model_path, "rb") as f:
         model = pickle.load(f)
-    features = pickle.load(open(os.path.join(ML_DIR, 'churn_features.pkl'), 'rb'))
+    
+    # Load features
+    features_path = os.path.join(BASE_DIR, "churn_features.pkl")
+    with open(features_path, "rb") as f:
+        features = pickle.load(f)
     df['order-date'] = pd.to_datetime(df['order-date'])
 
     test_data = data_prep(df)
