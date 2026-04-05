@@ -11,3 +11,4 @@ faker
 yfinance
 mitosheet
 catboost
+lightgbm
