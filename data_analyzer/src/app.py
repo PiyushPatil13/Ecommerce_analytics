@@ -233,7 +233,7 @@ else:
             st.dataframe(styled_moderate, use_container_width=True)
         else:
             st.warning("No moderate risk customers found")
-        st.subheader("🟡 Moderate Risk Customers")  hig
+        st.subheader("🟡 Moderate Risk Customers")  
         st.dataframe(styled_moderate, use_container_width=True)
         st.download_button(
             label="Download Moderate Risk Customers CSV",
