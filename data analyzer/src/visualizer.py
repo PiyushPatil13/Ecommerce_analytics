@@ -818,11 +818,17 @@ def call_churn(df):
     import pickle
     import pandas as pd
 
-    # ✅ Dynamic base path (WORKS everywhere)
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
     model_path = os.path.join(BASE_DIR, "machine_learning", "churn_predictor.pkl")
     features_path = os.path.join(BASE_DIR, "machine_learning", "churn_features.pkl")
+
+    # 🔥 SAFETY CHECK (THIS WAS MISSING)
+    if not os.path.exists(model_path):
+        raise FileNotFoundError(f"Model not found at: {model_path}")
+
+    if not os.path.exists(features_path):
+        raise FileNotFoundError(f"Features file not found at: {features_path}")
 
     # ✅ Load model + features
     with open(model_path, "rb") as f:
@@ -831,10 +837,14 @@ def call_churn(df):
     with open(features_path, "rb") as f:
         features = pickle.load(f)
 
-    # ✅ Preprocess data SAME as training
-    df['order-date'] = pd.to_datetime(df['order-date'])
+    # ✅ Preprocess
+    df = df.copy()
+    df['order-date'] = pd.to_datetime(df['order-date'], errors='coerce')
+    df = df.dropna(subset=['order-date'])
+
     ref_date = df['order-date'].max()
 
+    # ✅ Aggregation
     customer_stats = df.groupby('customer-email').agg(
         last_purchase=('order-date', 'max'),
         total_orders=('order-id', 'count'),
@@ -844,7 +854,7 @@ def call_churn(df):
         cancel_count=('status', lambda x: (x == 'Cancelled').sum())
     ).reset_index()
 
-    # ✅ Feature engineering (MATCH TRAINING EXACTLY)
+    # ✅ Feature engineering
     customer_stats['recency'] = (ref_date - customer_stats['last_purchase']).dt.days
 
     customer_stats['return_rate'] = (
@@ -860,7 +870,7 @@ def call_churn(df):
     customer_first = df.groupby('customer-email')['order-date'].min().reset_index()
     customer_first.columns = ['customer-email', 'first_purchase']
 
-    customer_stats = customer_stats.merge(customer_first, on='customer-email')
+    customer_stats = customer_stats.merge(customer_first, on='customer-email', how='left')
 
     customer_stats['customer_age_days'] = (
         ref_date - customer_stats['first_purchase']
@@ -871,7 +881,7 @@ def call_churn(df):
         customer_stats['customer_age_days'].clip(lower=1)
     )
 
-    # ✅ Ensure all features exist
+    # ✅ Ensure feature consistency
     for col in features:
         if col not in customer_stats.columns:
             customer_stats[col] = 0
