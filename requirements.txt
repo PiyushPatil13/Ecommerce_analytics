@@ -9,4 +9,3 @@ statsmodels
 matplotlib
 faker
 yfinance
-pickle5
