@@ -172,7 +172,6 @@ else:
 
     # ── STRATEGIC INSIGHTS ──────────────────────────
     elif app_mode == "Strategic Insights":
-        set_background("https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYMoRbKAJZnDxO6d_XqMtPuPyFuO5eblmpcQ&s")
         st.title("Risk Analysis")
         cleaned_df = run_clean_pipeline(df)
         st.caption("Risk analysis page")
